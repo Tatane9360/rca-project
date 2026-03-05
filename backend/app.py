@@ -193,6 +193,7 @@ def search_tasks():
             "timestamp": datetime.now().isoformat(),
         }
     )
+    del search_history[:-10]
     serialized = []
     for t in results:
         serialized.append(
