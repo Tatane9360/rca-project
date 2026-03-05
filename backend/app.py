@@ -128,16 +128,19 @@ def create_task():
     if cur.fetchone():
         return jsonify({"error": "Task already exists"}), 409
 
-    cur.execute(
-        "INSERT INTO tasks (title, description, is_active, created_at, updated_at) VALUES (%s, %s, %s, %s, %s) RETURNING *",
-        (
-            data["title"],
-            data.get("description", ""),
-            True,
-            datetime.now(timezone.utc),
-            datetime.now(timezone.utc),
-        ),
-    )
+    try:
+        cur.execute(
+            "INSERT INTO tasks (title, description, is_active, created_at, updated_at) VALUES (%s, %s, %s, %s, %s) RETURNING *",
+            (
+                data["title"],
+                data.get("description", ""),
+                True,
+                datetime.now(timezone.utc),
+                datetime.now(timezone.utc),
+            ),
+        )
+    except psycopg2.IntegrityError:
+        return jsonify({"error": "Task already exists (DB constraint)"}), 409
     task = cur.fetchone()
     r = get_redis()
     r.delete("stats")
