@@ -62,8 +62,20 @@ def after_request(response):
 
 @app.route("/health")
 def health():
+    db_status = "error"
+    try:
+        db = get_db()
+        cur = db.cursor()
+        cur.execute("SELECT 1")
+        db_status = "ok"
+    except Exception:
+        pass
     return jsonify(
-        {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
+        {
+            "status": "ok",
+            "database": db_status,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
     )
 
 
@@ -110,6 +122,12 @@ def create_task():
         return jsonify({"error": "Title is required"}), 400
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Check for duplicates (Bug n3)
+    cur.execute("SELECT id FROM tasks WHERE title = %s", (data["title"],))
+    if cur.fetchone():
+        return jsonify({"error": "Task already exists"}), 409
+
     cur.execute(
         "INSERT INTO tasks (title, description, is_active, created_at, updated_at) VALUES (%s, %s, %s, %s, %s) RETURNING *",
         (
