@@ -82,6 +82,12 @@ def health():
 
 @app.route("/api/tasks", methods=["GET"])
 def list_tasks():
+    """
+    Récupère la liste des tâches depuis la base de données.
+    Prend en charge le filtrage par statut (active/done) et par date (aujourd'hui).
+    """
+
+
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     status = request.args.get("status")
@@ -118,6 +124,12 @@ def list_tasks():
 
 @app.route("/api/tasks", methods=["POST"])
 def create_task():
+    """
+    Crée une nouvelle tâche dans la base de données.
+    Vérifie la présence d'un titre et empêche les doublons.
+    """
+
+
     data = request.get_json()
     if not data or not data.get("title"):
         app.logger.error("Failed to create task: Missing title in request body")
@@ -162,6 +174,12 @@ def create_task():
 
 @app.route("/api/tasks/<int:task_id>", methods=["PUT"])
 def update_task(task_id):
+    """
+    Met à jour une tâche existante par son ID.
+    Permet de modifier le titre, la description ou le statut actif.
+    """
+
+
     data = request.get_json()
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -194,6 +212,11 @@ def update_task(task_id):
 
 @app.route("/api/tasks/<int:task_id>", methods=["DELETE"])
 def delete_task(task_id):
+    """
+    Supprime une tâche de la base de données par son ID.
+    """
+
+
     db = get_db()
     cur = db.cursor()
     cur.execute("DELETE FROM tasks WHERE id = %s", (task_id,))
@@ -204,6 +227,12 @@ def delete_task(task_id):
 
 @app.route("/api/search", methods=["GET"])
 def search_tasks():
+    """
+    Recherche des tâches correspondant à une requête dans le titre ou la description.
+    Conserve un historique simple des recherches récentes.
+    """
+
+
     q = request.args.get("q", "")
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
