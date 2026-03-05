@@ -55,7 +55,8 @@ def after_request(response):
         app.logger.info(
             f"{request.method} {request.path} -> {response.status_code} ({duration.total_seconds():.3f}s)"
         )
-    except:
+    except Exception as e:
+        app.logger.warning(f"Request logging after error: {e}")
         pass
     return response
 
@@ -119,6 +120,7 @@ def list_tasks():
 def create_task():
     data = request.get_json()
     if not data or not data.get("title"):
+        app.logger.error("Failed to create task: Missing title in request body")
         return jsonify({"error": "Title is required"}), 400
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -126,6 +128,7 @@ def create_task():
     # Check for duplicates (Bug n3)
     cur.execute("SELECT id FROM tasks WHERE title = %s", (data["title"],))
     if cur.fetchone():
+        app.logger.warning(f"Duplicate task creation attempt: {data['title']}")
         return jsonify({"error": "Task already exists"}), 409
 
     try:
@@ -139,7 +142,8 @@ def create_task():
                 datetime.now(timezone.utc),
             ),
         )
-    except psycopg2.IntegrityError:
+    except psycopg2.IntegrityError as e:
+        app.logger.error(f"Database Integrity Error during task creation: {e}")
         return jsonify({"error": "Task already exists (DB constraint)"}), 409
     task = cur.fetchone()
     r = get_redis()
@@ -164,6 +168,7 @@ def update_task(task_id):
     cur.execute("SELECT * FROM tasks WHERE id = %s", (task_id,))
     task = cur.fetchone()
     if not task:
+        app.logger.error(f"Task update failed: Task ID {task_id} not found")
         return jsonify({"error": "Not found"}), 404
     title = data.get("title", task["title"])
     description = data.get("description", task["description"])
