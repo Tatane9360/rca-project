@@ -20,7 +20,8 @@ function App() {
       if (filter !== "all") params.status = filter;
       if (filter === "today")
         params.today = new Date().toISOString().split("T")[0];
-      const res = await axios.get(`${API_URL}/tasks`, { params });
+      const res = await axios.get("/api/tasks", { params });
+
       setTasks(res.data);
     } catch (err) {
       console.error("Failed to fetch tasks:", err);
@@ -35,7 +36,8 @@ function App() {
 
   const addTask = async (task) => {
     try {
-      await axios.post(`${API_URL}/tasks`, task);
+      await axios.post("/api/tasks", task);
+
       fetchTasks();
     } catch (err) {
       console.error("Failed to create task:", err);
@@ -43,7 +45,8 @@ function App() {
   };
   const toggleTask = async (id, isActive) => {
     try {
-      await axios.put(`${API_URL}/tasks/${id}`, { is_active: !isActive });
+      await axios.put(`/api/tasks/${id}`, { is_active: !isActive });
+
       fetchTasks();
     } catch (err) {
       console.error("Failed to update task:", err);
@@ -51,7 +54,8 @@ function App() {
   };
   const deleteTask = async (id) => {
     try {
-      await axios.delete(`${API_URL}/tasks/${id}`);
+      await axios.delete(`/api/tasks/${id}`);
+
       fetchTasks();
     } catch (err) {
       console.error("Failed to delete task:", err);
@@ -63,7 +67,8 @@ function App() {
       return;
     }
     try {
-      const res = await axios.get(`${API_URL}/search`, {
+      const res = await axios.get("/api/search", {
+
         params: { q: query },
       });
       setTasks(res.data);
